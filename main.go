@@ -9,28 +9,34 @@ import (
 )
 
 func main() {
-	sets := lanParty("../test_input_day23_2024.txt")
-	fmt.Println("** Part 1 **")
-	fmt.Printf("Number of sets of 3 interconnected computers : %d\n", len(sets))
+	sets, err := lanParty("./datas_tests/example_input_day23_2024.txt")
+	if err == nil {
+		fmt.Println("** Part 1 **")
+		fmt.Printf("Number of sets of 3 interconnected computers : %d\n", len(sets))
+	}
+
 }
 
-func lanParty(filename string) [][]string {
+func lanParty(filename string) ([][]string, error) {
 	allSets := [][]string{}
-	lanRelations := readFile(filename)
-	for computer, relations := range lanRelations {
-		// Look only for computers with t
-		match, _ := regexp.MatchString("^t.*$", computer)
-		if match {
-			// Create sets 3 interconnected computers
-			set := createSet(computer, relations, lanRelations)
-			for i := range set {
-				if !arrExists(allSets, set[i]) {
-					allSets = append(allSets, set[i])
+	lanRelations, err := readFile(filename)
+
+	if err == nil {
+		for computer, relations := range lanRelations {
+			// Look only for computers with t
+			match, _ := regexp.MatchString("^t.*$", computer)
+			if match {
+				// Create sets 3 interconnected computers
+				set := createSet(computer, relations, lanRelations)
+				for i := range set {
+					if !arrExists(allSets, set[i]) {
+						allSets = append(allSets, set[i])
+					}
 				}
 			}
 		}
 	}
-	return allSets
+	return allSets, err
 }
 
 // Check if 2 arrays contain precisely the same elements (no order)
@@ -72,24 +78,31 @@ func createSet(computer string, relations []string, lanRelations map[string][]st
 }
 
 // Read file and create dico of LAN relation
-func readFile(filename string) map[string][]string {
-	f, _ := os.Open(filename)
-	sc := bufio.NewScanner(f)
+func readFile(filename string) (map[string][]string, error) {
+	f, err := os.Open(filename)
 	dicoRelations := make(map[string][]string)
-	tmp := []string{}
+	if err == nil {
+		sc := bufio.NewScanner(f)
+		tmp := []string{}
+		for sc.Scan() {
+			line := sc.Text()
+			tmp = strings.Split(line, "-")
+			// Insert only once each element in both (cf. no direction)
+			if !isInTab(dicoRelations[tmp[0]], tmp[1]) {
+				dicoRelations[tmp[0]] = append(dicoRelations[tmp[0]], tmp[1])
+			}
+			if !isInTab(dicoRelations[tmp[1]], tmp[0]) {
+				dicoRelations[tmp[1]] = append(dicoRelations[tmp[1]], tmp[0])
+			}
+		}
 
-	for sc.Scan() {
-		line := sc.Text()
-		tmp = strings.Split(line, "-")
-		// Insert only once each element in both (cf. no direction)
-		if !isInTab(dicoRelations[tmp[0]], tmp[1]) {
-			dicoRelations[tmp[0]] = append(dicoRelations[tmp[0]], tmp[1])
-		}
-		if !isInTab(dicoRelations[tmp[1]], tmp[0]) {
-			dicoRelations[tmp[1]] = append(dicoRelations[tmp[1]], tmp[0])
-		}
+		return dicoRelations, nil
+
+	} else {
+		fmt.Println("File not found")
+		return dicoRelations, err
 	}
-	return dicoRelations
+
 }
 
 // Check if an element is in the given array
