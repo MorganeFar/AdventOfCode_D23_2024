@@ -145,6 +145,7 @@ Bron Kerbosch algorithm to solve part 2
 */
 
 func lanPartyP2(filename string) string {
+	// Initialize Bron Kerbosch variables
 	graph, err := readFile(filename)
 	if err == nil {
 		/*
@@ -173,6 +174,7 @@ func lanPartyP2(filename string) string {
 				maxi = clique
 			}
 		}
+
 		// Sort alphabetic order
 		sort.Strings(maxi)
 		// Transform to string
@@ -241,6 +243,7 @@ func remove(set map[string][]string, element string) map[string][]string {
 	return set
 }
 
+// Transform an array of string of a string split with ","
 func setToString(biggestSet []string) string {
 	var buffer bytes.Buffer
 	size := len(biggestSet)
@@ -288,6 +291,7 @@ func readFile(filename string) (map[string][]string, error) {
 
 }
 
+// Test the existence of a given file
 func fileExists(filename string) bool {
 	info, err := os.Stat(filename)
 	if os.IsNotExist(err) {
