@@ -21,30 +21,30 @@ go run . PATH/TO/INPUT/FILE.txt 2
 ```
 
 
-Parallélisation
-PS C:\Users\Morgane FAREZ\Documents\USMB\L3\S6\INFO601_GO\projet\paral> go run .
+Parallelization
 ** Part 1 **
 Number of sets of 3 interconnected computers : 7
 ** Part 2 **
 Code : co,de,ka,ta
 Time  614.2µs
-PS C:\Users\Morgane FAREZ\Documents\USMB\L3\S6\INFO601_GO\projet\paral> go run .
 ** Part 1 **
 Number of sets of 3 interconnected computers : 7
 ** Part 2 **
 Code : co,de,ka,ta
 Time  526.9µs
 
-Sans parallélisation
-PS C:\Users\Morgane FAREZ\Documents\USMB\L3\S6\INFO601_GO\projet\paral> go run .
+Without parallelization
 ** Part 1 **
 Number of sets of 3 interconnected computers : 7
 ** Part 2 **
 Code : co,de,ka,ta
 Time  621.2µs
-PS C:\Users\Morgane FAREZ\Documents\USMB\L3\S6\INFO601_GO\projet\paral> go run .
+
 ** Part 1 **
 Number of sets of 3 interconnected computers : 7
 ** Part 2 **
 Code : co,de,ka,ta
 Time  542µs
+
+------------
+The parallized code wasn't working well on the Bron Kerbosch algorithm when it comes to bigger sets.
