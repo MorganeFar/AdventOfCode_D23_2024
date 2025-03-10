@@ -12,7 +12,15 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
+	"time"
 )
+
+// Global variables
+
+var wg sync.WaitGroup
+var mutexClique *sync.Mutex
+var mutexMap *sync.Mutex
 
 func main() {
 
@@ -23,7 +31,7 @@ func main() {
 		filepath = argsFile[1]
 	} else {
 		// default value
-		filepath = "./datas_tests/example_input_day23_2024.txt"
+		filepath = "../test_input_day23_2024.txt"
 	}
 
 	if fileExists(filepath) {
@@ -45,7 +53,7 @@ func main() {
 			part2(filepath)
 		default:
 			part1(filepath)
-			part2(filepath)
+			part2_para(filepath)
 		}
 
 	} else {
@@ -60,9 +68,23 @@ func part1(filename string) {
 }
 
 func part2(filename string) {
+	start := time.Now()
 	code := lanPartyP2(filename)
+	t := time.Now()
+	elapsed := t.Sub(start)
 	fmt.Println("** Part 2 **")
 	fmt.Printf("Code : %s\n", code)
+	fmt.Println("Time ", elapsed)
+}
+
+func part2_para(filename string) {
+	start := time.Now()
+	code := lanPartyP2_para(filename)
+	t := time.Now()
+	elapsed := t.Sub(start)
+	fmt.Println("** Part 2 para**")
+	fmt.Printf("Code : %s\n", code)
+	fmt.Println("Time ", elapsed)
 }
 
 /*
@@ -208,6 +230,105 @@ func bronKerbosch(R, P, X map[string][]string, graph map[string][]string, clique
 		P = remove(P, node)
 		X = add(X, node)
 	}
+}
+
+func lanPartyP2_para(filename string) string {
+	graph, err := readFile(filename)
+	if err != nil {
+		return ""
+	}
+
+	// Initialize variables
+	R := make(map[string][]string)
+	P := make(map[string][]string)
+	X := make(map[string][]string)
+
+	// Initialize P with all nodes
+	for node := range graph {
+		P[node] = []string{}
+	}
+
+	// Use a channel to collect cliques from Goroutines
+	cliqueChan := make(chan []string)
+	var wg sync.WaitGroup
+
+	// Start the parallel Bron-Kerbosch algorithm
+	wg.Add(1)
+	go bronKerboschParallel(R, P, X, graph, cliqueChan, &wg)
+
+	// Collect cliques in a separate Goroutine
+	var cliques [][]string
+	go func() {
+		for clique := range cliqueChan {
+			cliques = append(cliques, clique)
+		}
+	}()
+
+	// Wait for all Goroutines to finish
+	wg.Wait()
+	close(cliqueChan)
+
+	// Find the maximal clique
+	maxi := []string{}
+	if len(cliques) > 0 {
+		maxi = cliques[0]
+		for _, clique := range cliques {
+			if len(clique) > len(maxi) {
+				maxi = clique
+			}
+		}
+
+		// Sort and return the result
+		sort.Strings(maxi)
+	} else {
+		maxi = append(maxi, "error")
+	}
+
+	return setToString(maxi)
+}
+
+func bronKerboschParallel(R, P, X map[string][]string, graph map[string][]string, cliqueChan chan []string, wg *sync.WaitGroup) {
+
+	// If P and X are both empty, R is a maximal clique
+	if len(P) == 0 && len(X) == 0 {
+		clique := make([]string, 0, len(R))
+		for node := range R {
+			clique = append(clique, node)
+		}
+		cliqueChan <- clique
+		return
+	}
+
+	// Process nodes in parallel
+	var localWg sync.WaitGroup
+	for node := range P {
+		neighbors := graph[node]
+
+		// Create new sets for recursion
+		PNew := intersection(P, neighbors)
+		XNew := intersection(X, neighbors)
+
+		// Add the current node to R
+		RNew := union(R, node)
+
+		// Launch a new Goroutine for each branch
+		localWg.Add(1)
+		wg.Add(1)
+		go func(RNew, PNew, XNew map[string][]string) {
+
+			defer localWg.Done()
+			defer wg.Done()
+			bronKerboschParallel(RNew, PNew, XNew, graph, cliqueChan, wg)
+
+		}(RNew, PNew, XNew)
+
+		// Update P and X (backtracking)
+		P = remove(P, node)
+		X = add(X, node)
+	}
+
+	// Wait for all child Goroutines to finish
+	localWg.Wait()
 }
 
 // Find the common elements bewteen 2 sets
