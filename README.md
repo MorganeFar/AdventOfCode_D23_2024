@@ -48,3 +48,4 @@ Time  542µs
 
 ------------
 The parallized code wasn't working well on the Bron Kerbosch algorithm when it comes to bigger sets.
+You can find on the dev branch the last attempt of functions.s
